@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能助手 - 首页</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .stat-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .record-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .record-item:hover {
+            background: #f8f9fa;
+        }
+        .record-time {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">📅 智能助手</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">🏠 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/stats">📊 统计</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/add">➕ 添加</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">🚪 退出</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- 欢迎和快速操作 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">📅 欢迎回来！</h2>
+                <p class="text-muted mb-0">{{ today_date }} 的安排和消费</p>
+            </div>
+            <div>
+                <a href="/add/event" class="btn btn-outline-primary me-2">📅 添加日程</a>
+                <a href="/add/expense" class="btn btn-primary">💰 添加消费</a>
+            </div>
+        </div>
+
+        <!-- 统计数据卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-3" style="font-size: 2rem;">📅</div>
+                        <h3 class="stat-number text-primary mb-1" id="eventCount">0</h3>
+                        <p class="text-muted mb-0">今日日程</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-3" style="font-size: 2rem;">💰</div>
+                        <h3 class="stat-number text-success mb-1" id="expenseCount">0</h3>
+                        <p class="text-muted mb-0">今日消费笔数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body text-center">
+                        <div class="text-danger mb-3" style="font-size: 2rem;">💸</div>
+                        <h3 class="stat-number text-danger mb-1" id="totalExpense">¥0.00</h3>
+                        <p class="text-muted mb-0">今日总消费</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-3" style="font-size: 2rem;">⏱️</div>
+                        <h3 class="stat-number text-warning mb-1" id="totalDuration">0h 0m</h3>
+                        <p class="text-muted mb-0">日程总时长</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 今日日程 -->
+            <div class="col-lg-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">📅 今日日程</h5>
+                            <a href="/view/events" class="btn btn-sm btn-outline-primary">查看全部</a>
+                        </div>
+                        
+                        <div id="eventsLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="text-muted mt-2">正在加载日程...</p>
+                        </div>
+                        
+                        <div id="noEvents" class="empty-state" style="display: none;">
+                            <div class="empty-icon">📅</div>
+                            <h5 class="text-muted">今日没有日程安排</h5>
+                            <p class="text-muted mb-3">添加你的第一个日程</p>
+                            <a href="/add/event" class="btn btn-outline-primary">➕ 添加日程</a>
+                        </div>
+                        
+                        <div id="eventsList" style="display: none;">
+                            <!-- 日程列表将通过JavaScript动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 今日消费 -->
+            <div class="col-lg-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">💰 今日消费</h5>
+                            <a href="/view/expenses" class="btn btn-sm btn-outline-success">查看全部</a>
+                        </div>
+                        
+                        <div id="expensesLoading" class="text-center py-4">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="text-muted mt-2">正在加载消费记录...</p>
+                        </div>
+                        
+                        <div id="noExpenses" class="empty-state" style="display: none;">
+                            <div class="empty-icon">💰</div>
+                            <h5 class="text-muted">今日没有消费记录</h5>
+                            <p class="text-muted mb-3">记录你的第一笔消费</p>
+                            <a href="/add/expense" class="btn btn-outline-success">➕ 添加消费</a>
+                        </div>
+                        
+                        <div id="expensesList" style="display: none;">
+                            <!-- 消费列表将通过JavaScript动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速分析 -->
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">🤖 AI智能分析</h5>
+                <p class="text-muted mb-4">让AI助手分析你的今日数据，提供优化建议</p>
+                <div class="d-flex justify-content-center">
+                    <button id="aiAnalyzeBtn" class="btn btn-lg btn-primary">
+                        <span id="aiIcon">🤖</span>
+                        <span id="aiText">开始AI智能分析</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI分析模态框 -->
+    <div class="modal fade" id="aiModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">🤖 AI智能分析报告</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="aiLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3">AI正在分析您的数据，请稍候...</p>
+                    </div>
+                    <div id="aiResult" style="display: none;">
+                        <!-- AI分析结果将显示在这里 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button id="copyAnalysisBtn" class="btn btn-primary" style="display: none;">复制结果</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("首页加载完成");
+        loadTodayData();
+        
+        // 绑定AI分析按钮
+        document.getElementById('aiAnalyzeBtn').addEventListener('click', function() {
+            showAiAnalysis();
+        });
+        
+        // 绑定复制按钮
+        document.getElementById('copyAnalysisBtn').addEventListener('click', function() {
+            copyAiResult();
+        });
+        
+        // 每30秒自动刷新数据
+        setInterval(loadTodayData, 30000);
+    });
+    
+    // 加载今日数据
+    async function loadTodayData() {
+        console.log("正在加载今日数据...");
+        
+        try {
+            // 1. 加载统计摘要
+            const summaryResponse = await fetch('/api/stats/summary?period=today');
+            if (!summaryResponse.ok) throw new Error('获取摘要失败');
+            const summary = await summaryResponse.json();
+            
+            console.log("摘要数据：", summary);
+            
+            // 更新统计卡片
+            document.getElementById('eventCount').textContent = summary.event_count || 0;
+            document.getElementById('expenseCount').textContent = summary.expense_count || 0;
+            document.getElementById('totalExpense').textContent = '¥' + (summary.total_expense || 0).toFixed(2);
+            document.getElementById('totalDuration').textContent = formatDuration(summary.avg_duration * (summary.event_count || 0));
+            
+            // 2. 加载今日日程
+            await loadTodayEvents();
+            
+            // 3. 加载今日消费
+            await loadTodayExpenses();
+            
+        } catch (error) {
+            console.error("加载数据失败：", error);
+        }
+    }
+    
+    // 加载今日日程
+    async function loadTodayEvents() {
+        try {
+            const response = await fetch('/api/stats/events/details?period=today');
+            if (!response.ok) throw new Error('获取日程失败');
+            const data = await response.json();
+            
+            console.log("今日日程：", data);
+            
+            const loadingEl = document.getElementById('eventsLoading');
+            const noDataEl = document.getElementById('noEvents');
+            const listEl = document.getElementById('eventsList');
+            
+            loadingEl.style.display = 'none';
+            
+            if (!data.events || data.events.length === 0) {
+                noDataEl.style.display = 'block';
+                listEl.style.display = 'none';
+                return;
+            }
+            
+            noDataEl.style.display = 'none';
+            listEl.style.display = 'block';
+            
+            // 渲染日程列表
+            let html = '';
+            data.events.forEach(event => {
+                const time = new Date(event.event_time).toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                let durationText = '';
+                if (event.duration) {
+                    const hours = Math.floor(event.duration / 60);
+                    const minutes = event.duration % 60;
+                    durationText = `⏱️ ${hours}h ${minutes}m`;
+                }
+                
+                html += `
+                <div class="record-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2">📅</span>
+                                <strong>${event.title || '无标题'}</strong>
+                            </div>
+                            <div class="record-time mt-1">${time} ${durationText}</div>
+                            ${event.notes ? `<small class="text-muted">${event.notes}</small>` : ''}
+                        </div>
+                        <a href="/edit/${event.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
+                    </div>
+                </div>`;
+            });
+            
+            listEl.innerHTML = html;
+            
+        } catch (error) {
+            console.error("加载今日日程失败：", error);
+            document.getElementById('eventsLoading').style.display = 'none';
+            document.getElementById('noEvents').style.display = 'block';
+        }
+    }
+    
+    // 加载今日消费
+    async function loadTodayExpenses() {
+        try {
+            const response = await fetch('/api/stats/expenses/details?period=today');
+            if (!response.ok) throw new Error('获取消费失败');
+            const data = await response.json();
+            
+            console.log("今日消费：", data);
+            
+            const loadingEl = document.getElementById('expensesLoading');
+            const noDataEl = document.getElementById('noExpenses');
+            const listEl = document.getElementById('expensesList');
+            
+            loadingEl.style.display = 'none';
+            
+            if (!data.expenses || data.expenses.length === 0) {
+                noDataEl.style.display = 'block';
+                listEl.style.display = 'none';
+                return;
+            }
+            
+            noDataEl.style.display = 'none';
+            listEl.style.display = 'block';
+            
+            // 渲染消费列表
+            let html = '';
+            data.expenses.forEach(expense => {
+                const time = new Date(expense.event_time).toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                html += `
+                <div class="record-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">💰</span>
+                                <strong>${expense.title || '无标题'}</strong>
+                                <span class="badge bg-secondary ms-2">${expense.category || '未分类'}</span>
+                            </div>
+                            <div class="record-time mt-1">${time}</div>
+                            ${expense.notes ? `<small class="text-muted">${expense.notes}</small>` : ''}
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-danger">¥${parseFloat(expense.amount).toFixed(2)}</div>
+                            <a href="/edit/${expense.id}" class="btn btn-sm btn-outline-secondary mt-1">编辑</a>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            listEl.innerHTML = html;
+            
+        } catch (error) {
+            console.error("加载今日消费失败：", error);
+            document.getElementById('expensesLoading').style.display = 'none';
+            document.getElementById('noExpenses').style.display = 'block';
+        }
+    }
+    
+    // 格式化时长
+    function formatDuration(minutes) {
+        if (!minutes) return '0h 0m';
+        const hours = Math.floor(minutes / 60);
+        const mins = Math.round(minutes % 60);
+        return `${hours}h ${mins}m`;
+    }
+    
+    // 显示AI分析
+    async function showAiAnalysis() {
+        const modal = new bootstrap.Modal(document.getElementById('aiModal'));
+        const loadingEl = document.getElementById('aiLoading');
+        const resultEl = document.getElementById('aiResult');
+        const copyBtn = document.getElementById('copyAnalysisBtn');
+        
+        loadingEl.style.display = 'block';
+        resultEl.style.display = 'none';
+        copyBtn.style.display = 'none';
+        
+        modal.show();
+        
+        try {
+            // 获取数据
+            const summaryRes = await fetch('/api/stats/summary?period=today');
+            const eventsRes = await fetch('/api/stats/events/details?period=today');
+            const expensesRes = await fetch('/api/stats/expenses/details?period=today');
+            
+            if (!summaryRes.ok || !eventsRes.ok || !expensesRes.ok) {
+                throw new Error('获取数据失败');
+            }
+            
+            const summary = await summaryRes.json();
+            const events = await eventsRes.json();
+            const expenses = await expensesRes.json();
+            
+            // 生成分析报告
+            const analysis = generateAiAnalysis(summary, events, expenses);
+            
+            // 显示结果
+            loadingEl.style.display = 'none';
+            resultEl.style.display = 'block';
+            copyBtn.style.display = 'block';
+            resultEl.innerHTML = analysis;
+            
+        } catch (error) {
+            console.error("AI分析失败：", error);
+            loadingEl.innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <div class="mb-3">❌</div>
+                    <h5>分析失败</h5>
+                    <p class="text-muted">无法获取数据进行分析，请稍后重试</p>
+                </div>
+            `;
+        }
+    }
+    
+    // 生成AI分析报告
+    function generateAiAnalysis(summary, eventsData, expensesData) {
+        const events = eventsData.events || [];
+        const expenses = expensesData.expenses || [];
+        
+        let html = '<div class="ai-analysis">';
+        
+        // 1. 日程分析
+        html += '<div class="mb-4">';
+        html += '<h6>📅 日程分析</h6>';
+        
+        if (summary.event_count > 0) {
+            const avgDuration = summary.avg_duration || 0;
+            const hours = Math.floor(avgDuration / 60);
+            const minutes = avgDuration % 60;
+            
+            html += `<p>您今日有 ${summary.event_count} 个日程安排，平均每个日程 ${hours}小时${minutes}分钟。</p>`;
+            
+            // 时间分析
+            const morningEvents = events.filter(e => {
+                const hour = new Date(e.event_time).getHours();
+                return hour >= 6 && hour < 12;
+            }).length;
+            const afternoonEvents = events.filter(e => {
+                const hour = new Date(e.event_time).getHours();
+                return hour >= 12 && hour < 18;
+            }).length;
+            const eveningEvents = events.filter(e => {
+                const hour = new Date(e.event_time).getHours();
+                return hour >= 18 && hour < 24;
+            }).length;
+            
+            html += `<p>其中：</p><ul>`;
+            if (morningEvents > 0) html += `<li>上午安排：${morningEvents} 个</li>`;
+            if (afternoonEvents > 0) html += `<li>下午安排：${afternoonEvents} 个</li>`;
+            if (eveningEvents > 0) html += `<li>晚上安排：${eveningEvents} 个</li>`;
+            html += `</ul>`;
+            
+        } else {
+            html += '<p>今日没有日程安排，是休息的一天！</p>';
+        }
+        html += '</div>';
+        
+        // 2. 消费分析
+        html += '<div class="mb-4">';
+        html += '<h6>💰 消费分析</h6>';
+        
+        if (summary.expense_count > 0) {
+            html += `<p>今日消费 ${summary.expense_count} 笔，总计 ¥${summary.total_expense.toFixed(2)}，平均每笔 ¥${(summary.total_expense / summary.expense_count).toFixed(2)}。</p>`;
+            
+            // 分类统计
+            const categories = {};
+            expenses.forEach(expense => {
+                const category = expense.category || '未分类';
+                categories[category] = (categories[category] || 0) + parseFloat(expense.amount);
+            });
+            
+            html += '<p>消费类别：</p><ul>';
+            Object.entries(categories).forEach(([cat, amount]) => {
+                const percentage = ((amount / summary.total_expense) * 100).toFixed(1);
+                html += `<li>${cat}：¥${amount.toFixed(2)} (${percentage}%)</li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<p>今日没有消费记录，控制得很好！</p>';
+        }
+        html += '</div>';
+        
+        // 3. 优化建议
+        html += '<div class="mb-4">';
+        html += '<h6>💡 优化建议</h6>';
+        
+        if (summary.event_count > 3) {
+            html += '<p>📅 今日日程较多，注意合理安排休息时间，避免过度劳累。</p>';
+        } else if (summary.event_count === 0) {
+            html += '<p>📅 今日没有日程安排，可以考虑规划明天的活动。</p>';
+        } else {
+            html += '<p>📅 日程安排合理，继续保持良好的时间管理。</p>';
+        }
+        
+        if (summary.total_expense > 100) {
+            html += '<p>💰 今日消费较高，建议记录下必要消费，控制不必要的开支。</p>';
+        } else if (summary.total_expense > 0) {
+            html += '<p>💰 消费控制在合理范围内，很棒！</p>';
+        } else {
+            html += '<p>💰 今日没有消费，是省钱的一天！</p>';
+        }
+        
+        html += '</div>';
+        
+        html += '</div>';
+        return html;
+    }
+    
+    // 复制分析结果
+    function copyAiResult() {
+        const resultText = document.getElementById('aiResult').innerText;
+        navigator.clipboard.writeText(resultText).then(() => {
+            alert('分析结果已复制到剪贴板！');
+        }).catch(err => {
+            console.error('复制失败：', err);
+        });
+    }
+    </script>
+</body>
+</html>

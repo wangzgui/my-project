@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+
+{% block title %}记录消费{% endblock %}
+
+{% block main %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- 返回按钮 -->
+            <div class="mb-4">
+                <a href="/add" class="btn btn-outline-secondary">
+                    &larr; 返回选择
+                </a>
+            </div>
+
+            <!-- 主卡片 -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-success text-white py-3">
+                    <h2 class="h4 mb-0">💰 记录消费</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="/add/expense" id="expenseForm">
+                        <!-- 消费项目 -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">消费项目</label>
+                            <input type="text" class="form-control form-control-lg" id="title" name="title"
+                                   placeholder="例如：午餐、交通费、购物消费" required>
+                        </div>
+
+                        <div class="row mb-4">
+                            <!-- 金额 -->
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label fw-bold">消费金额 (¥)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">¥</span>
+                                    <input type="number" class="form-control" id="amount" name="amount"
+                                           step="0.01" min="0.01" placeholder="0.00" required>
+                                </div>
+                            </div>
+
+                            <!-- 消费类型 -->
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label fw-bold">消费类型</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">请选择类型</option>
+                                    <option value="餐饮">🍽️ 餐饮</option>
+                                    <option value="交通">🚗 交通</option>
+                                    <option value="购物">🛍️ 购物</option>
+                                    <option value="娱乐">🎬 娱乐</option>
+                                    <option value="学习">📚 学习</option>
+                                    <option value="医疗">🏥 医疗</option>
+                                    <option value="生活缴费">💡 生活缴费</option>
+                                    <option value="其他">📦 其他</option>
+                                </select>
+                            </div>
+
+                            <!-- 消费时间 -->
+                            <div class="col-md-6 mb-3">
+                                <label for="expense_time" class="form-label fw-bold">消费时间</label>
+                                <input type="datetime-local" class="form-control" id="expense_time" name="expense_time"
+                                       value="{{ default_time }}" required>
+                            </div>
+                        </div>
+
+                        <!-- 备注说明 -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-bold">备注说明</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                      placeholder="请输入消费详情、地点、用途等信息..."></textarea>
+                        </div>
+
+                        <!-- AI智能建议 -->
+                        <div class="card mb-4 border-success">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">✨ AI智能建议</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">让AI助手为您的消费提供个性化建议</p>
+
+                                <button type="button" id="aiSuggestBtn" class="btn btn-outline-success w-100 py-3 mb-3" onclick="getAISuggestion()">
+                                    <span id="aiIcon">🤖</span>
+                                    <span id="aiBtnText">获取AI智能建议</span>
+                                </button>
+
+                                <div class="alert alert-light border" id="aiResponse" style="display: none;">
+                                    <div class="d-flex">
+                                        <div class="me-3">💡</div>
+                                        <div>
+                                            <strong>AI建议：</strong>
+                                            <span id="aiText"></span>
+                                            <input type="hidden" id="ai_comment" name="ai_comment" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 提交按钮 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg py-3">
+                                💰 保存消费记录
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getAISuggestion() {
+    const type = "{{ 'event' if '/event' in request.path else 'expense' }}";
+    const btn = document.getElementById('aiSuggestBtn');
+    const aiText = document.getElementById('aiText');
+    const aiResponse = document.getElementById('aiResponse');
+    const aiCommentInput = document.getElementById('ai_comment');
+    
+    // 禁用按钮，显示加载状态
+    btn.disabled = true;
+    document.getElementById('aiBtnText').textContent = '思考中...';
+    document.getElementById('aiIcon').textContent = '⏳';
+    
+    // 收集表单数据
+    const formData = {
+        type: type,
+        title: document.getElementById('title').value,
+        notes: document.getElementById('notes') ? document.getElementById('notes').value : ''
+    };
+    
+    if (type === 'expense') {
+        formData.amount = document.getElementById('amount').value;
+        formData.category = document.getElementById('category').value;
+    } else {
+        formData.start_time = document.getElementById('start_time').value;
+        formData.end_time = document.getElementById('end_time').value;
+    }
+    
+    // 发送请求到后端API
+    fetch('/api/ai/suggest', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            aiText.textContent = '抱歉，AI暂时无法提供建议';
+        } else {
+            aiText.textContent = data.suggestion;
+            aiCommentInput.value = data.suggestion;
+        }
+        aiResponse.style.display = 'block';
+    })
+    .catch(error => {
+        console.error('AI建议错误：', error);
+        aiText.textContent = '网络错误，请稍后重试';
+        aiResponse.style.display = 'block';
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        btn.disabled = false;
+        document.getElementById('aiBtnText').textContent = '重新获取AI建议';
+        document.getElementById('aiIcon').textContent = '✨';
+    });
+}
+</script>
+{% endblock %}

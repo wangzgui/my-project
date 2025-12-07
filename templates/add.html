@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+
+{% block title %}添加记录 - 智能助手{% endblock %}
+
+{% block main %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-dark mb-3">📝 添加新记录</h1>
+        <p class="lead text-muted">请选择您要添加的记录类型</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- 日程安排卡片 -->
+        <div class="col-md-5 mb-4">
+            <a href="/add/event" class="text-decoration-none">
+                <div class="card border-0 shadow-lg h-100 hover-card" style="border-radius: 20px; transition: all 0.3s ease;">
+                    <div class="card-body text-center p-5">
+                        <div class="icon-wrapper mb-4">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex p-4">
+                                <span style="font-size: 3rem;">📅</span>
+                            </div>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3 text-dark">日程安排</h3>
+                        <p class="card-text text-muted mb-4">
+                            会议、任务、活动安排<br>
+                            记录您的计划与行程
+                        </p>
+                        <div class="feature-list text-start mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-success me-2">✓</span>
+                                <span>开始与结束时间</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-success me-2">✓</span>
+                                <span>持续时间计算</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-success me-2">✓</span>
+                                <span>备注说明</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="text-success me-2">✓</span>
+                                <span>AI智能建议</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100 py-3 fw-bold">
+                            创建日程安排
+                        </button>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 消费记账卡片 -->
+        <div class="col-md-5 mb-4">
+            <a href="/add/expense" class="text-decoration-none">
+                <div class="card border-0 shadow-lg h-100 hover-card" style="border-radius: 20px; transition: all 0.3s ease;">
+                    <div class="card-body text-center p-5">
+                        <div class="icon-wrapper mb-4">
+                            <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex p-4">
+                                <span style="font-size: 3rem;">💰</span>
+                            </div>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3 text-dark">消费记账</h3>
+                        <p class="card-text text-muted mb-4">
+                            购物、餐饮、交通消费<br>
+                            记录您的每一笔开支
+                        </p>
+                        <div class="feature-list text-start mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-success me-2">✓</span>
+                                <span>消费类型选择</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-success me-2">✓</span>
+                                <span>金额记录</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-success me-2">✓</span>
+                                <span>消费时间</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="text-success me-2">✓</span>
+                                <span>AI智能建议</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-lg w-100 py-3 fw-bold">
+                            记录消费
+                        </button>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+.feature-list {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,186 @@
+:root {
+    /* 莫兰迪主色调 */
+    --morandi-blue: #a8d8ea;
+    --morandi-purple: #aa96da;
+    --morandi-pink: #ffaaa5;
+    --morandi-green: #a8e6cf;
+    --morandi-beige: #f7f3f0;
+    --morandi-gray: #d8e3e7;
+    --morandi-dark: #556270;
+}
+
+/* 基础样式 */
+body {
+    background-color: var(--morandi-beige);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--morandi-dark);
+}
+
+/* 卡片样式 */
+.card {
+    background: white;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--morandi-blue), var(--morandi-purple));
+    color: white;
+    border: none;
+    padding: 1.5rem 1.5rem;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background: var(--morandi-purple);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #9575cd;
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(170,150,218,0.3);
+}
+
+.btn-outline-primary {
+    border-color: var(--morandi-purple);
+    color: var(--morandi-purple);
+}
+
+.btn-outline-primary:hover {
+    background: var(--morandi-purple);
+    border-color: var(--morandi-purple);
+}
+
+.btn-success {
+    background: var(--morandi-green);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+}
+
+.btn-success:hover {
+    background: #8dd7b9;
+}
+
+/* 表单控件 */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid var(--morandi-gray);
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--morandi-blue);
+    box-shadow: 0 0 0 3px rgba(168,216,234,0.2);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--morandi-dark);
+    margin-bottom: 8px;
+}
+
+/* 时间输入组 */
+.time-group {
+    background: var(--morandi-beige);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+/* 持续时间显示框 */
+.duration-box {
+    background: linear-gradient(135deg, var(--morandi-green), #a8e6cf);
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* AI建议区域 */
+.ai-suggestion {
+    background: linear-gradient(135deg, #fff9e6, #fff0f0);
+    border-left: 5px solid var(--morandi-pink);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    position: relative;
+}
+
+.ai-suggestion:before {
+    content: "✨";
+    position: absolute;
+    left: -15px;
+    top: 20px;
+    font-size: 24px;
+    background: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(255,170,165,0.3);
+}
+
+/* 表情装饰 */
+.decor-emoji {
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+/* 切换按钮样式 */
+.btn-group .btn {
+    transition: all 0.3s ease;
+    border-radius: 10px !important;
+    margin: 0 5px;
+}
+
+.btn-group .btn-check:checked + .btn {
+    background: var(--morandi-purple);
+    border-color: var(--morandi-purple);
+    transform: scale(1.05);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .time-group {
+        padding: 15px;
+    }
+
+    .duration-box {
+        font-size: 1rem;
+        padding: 12px;
+    }
+}
+
+/* 加载动画 */
+.ai-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--morandi-gray);
+    border-radius: 50%;
+    border-top-color: var(--morandi-purple);
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

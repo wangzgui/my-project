@@ -1,0 +1,241 @@
+{% extends "layout.html" %}
+
+{% block title %}添加日程安排{% endblock %}
+
+{% block main %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- 返回按钮 -->
+            <div class="mb-4">
+                <a href="/add" class="btn btn-outline-secondary">
+                    &larr; 返回选择
+                </a>
+            </div><!-- 主卡片 -->
+        <div class="card border-0 shadow">
+        <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h4 mb-0">📅 添加日程安排</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="/add/event" id="eventForm">
+                        <!-- 标题 -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">标题/项目名称</label>
+                            <input type="text" class="form-control form-control-lg" id="title" name="title"
+                                   placeholder="例如：团队周会、项目讨论、健身计划" required>
+                        </div><!-- 时间安排 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="start_time" class="form-label fw-bold">开始时间</label>
+                            <input type="datetime-local" class="form-control" id="start_time" name="start_time"
+                                       value="{{ default_time }}" required>
+                            </div>
+                            <div class="col-md-6">
+                            <label for="end_time" class="form-label fw-bold">结束时间</label>
+                        <input type="datetime-local" class="form-control" id="end_time" name="end_time"
+                                       value="{{ one_hour_later }}" required>
+                        </div>
+                        </div><!-- 持续时间计算 -->
+                        <div class="alert alert-info mb-4" id="durationDisplay">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">⏱️ 预计持续时间：</span>
+                                <span class="h5 mb-0" id="durationText">1小时0分钟</span>
+                            </div>
+                        </div><!-- 备注说明 -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-bold">备注说明</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4"
+                             placeholder="请输入日程的详细信息、准备事项、参会人员、注意事项等..."></textarea>
+                        </div><!-- AI智能建议 -->
+                        <div class="card mb-4 border-primary">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">✨ AI智能建议</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">让AI助手为您的日程提供个性化建议和提醒</p>
+
+<button type="button" id="aiSuggestBtn" class="btn btn-outline-primary w-100 py-3 mb-3" onclick="getAISuggestion()">
+                                    <span id="aiIcon">🤖</span>
+                                    <span id="aiBtnText">获取AI智能建议</span>
+                                </button>
+
+                                <div class="alert alert-light border" id="aiResponse" style="display: none;">
+                                    <div class="d-flex">
+                                        <div class="me-3">💡</div>
+                                        <div>
+                                            <strong>AI建议：</strong>
+                                            <span id="aiText"></span>
+                                            <input type="hidden" id="ai_comment" name="ai_comment" value="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- 提交按钮 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                💾 保存日程安排
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startTime = document.getElementById('start_time');
+    const endTime = document.getElementById('end_time');
+    const durationText = document.getElementById('durationText');
+    const durationDisplay = document.getElementById('durationDisplay');
+
+    // 时间计算函数
+    function calculateDuration() {
+        if (startTime.value && endTime.value) {
+            const start = new Date(startTime.value);
+            const end = new Date(endTime.value);
+
+            if (end > start) {
+                const durationMs = end - start;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                durationText.textContent = `${hours}小时${minutes}分钟`;
+                durationDisplay.style.display = 'block';
+            } else {
+                durationText.textContent = '结束时间必须晚于开始时间';
+                durationDisplay.className = 'alert alert-danger mb-4';
+            }
+        }
+    }
+
+    // 实时计算持续时间
+    startTime.addEventListener('change', calculateDuration);
+    endTime.addEventListener('change', calculateDuration);
+
+    // 表单验证
+    document.getElementById('eventForm').addEventListener('submit', function(e) {
+        if (!startTime.value || !endTime.value) {
+            e.preventDefault();
+            alert('请填写开始时间和结束时间！');
+            return false;
+        }
+
+        const start = new Date(startTime.value);
+        const end = new Date(endTime.value);
+
+        if (end <= start) {
+            e.preventDefault();
+            alert('结束时间必须晚于开始时间！');
+            return false;
+        }
+
+        return true;
+    });
+
+    // AI建议功能
+    window.getAISuggestion = async function () {
+    const btn = document.getElementById('aiSuggestBtn');
+    const aiText = document.getElementById('aiText');
+    const aiResponse = document.getElementById('aiResponse');
+    const aiCommentInput = document.getElementById('ai_comment');
+
+    // 获取表单数据
+    const title = document.getElementById('title').value.trim();
+    const startTime = document.getElementById('start_time').value;
+    const endTime = document.getElementById('end_time').value;
+    const notes = document.getElementById('notes').value.trim();
+
+    // 验证必需字段
+    if (!title) {
+        alert('请先填写日程标题！');
+        return;
+    }
+
+    // 设置加载状态
+    btn.disabled = true;
+    document.getElementById('aiBtnText').textContent = 'AI思考中...';
+    document.getElementById('aiIcon').textContent = '⏳';
+
+    try {
+        // 1. 构建请求数据
+        const requestData = {
+            type: 'event',
+            title: title,
+            notes: notes
+        };
+
+        // 如果有时间信息，加入
+        if (startTime) {
+            requestData.start_time = startTime;
+        }
+        if (endTime) {
+            requestData.end_time = endTime;
+        }
+
+        // 2. 调用后端的AI建议接口
+        const response = await fetch('/api/ai/suggest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`API请求失败: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // 3. 处理响应
+        if (data.success) {
+            // 显示AI回复
+            aiText.textContent = data.suggestion;
+            aiResponse.style.display = 'block';
+            aiCommentInput.value = data.suggestion;
+
+            // 恢复按钮状态
+            btn.disabled = false;
+            document.getElementById('aiBtnText').textContent = '重新获取AI建议';
+            document.getElementById('aiIcon').textContent = '✨';
+        } else {
+            // 如果后端API失败，使用备用的模拟回复
+            throw new Error(data.error || 'AI服务暂时不可用');
+        }
+
+    } catch (error) {
+        console.error('AI建议请求失败:', error);
+
+        // 4. 如果出错，使用模拟回复（后备方案）
+        const mockResponses = [
+            "🎯 这个日程安排很合理！建议提前10分钟准备，确保设备调试完毕。",
+            "⏰ 时间规划不错！记得预留5-10分钟缓冲时间以防意外延迟。",
+            "💡 考虑为这个日程设定一个明确的目标，这样效率会更高哦！",
+            "🤝 如果有参会者，建议提前发送会议议程和材料。",
+            "☕ 长时间日程？记得安排短暂的休息时间保持精力充沛。",
+            "📅 建议将这个日程添加到日历提醒，避免忘记。",
+            "✍️ 可以提前列出议程要点，让会议更高效。",
+            "🔔 设置多个提醒：提前15分钟、5分钟各一次。"
+        ];
+
+        const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+        aiText.textContent = `🤖 ${response}（本地建议）`;
+        aiResponse.style.display = 'block';
+        aiCommentInput.value = response;
+
+        // 恢复按钮状态
+        btn.disabled = false;
+        document.getElementById('aiBtnText').textContent = '重新获取AI建议';
+        document.getElementById('aiIcon').textContent = '⚠️';
+
+        // 显示错误提示
+        alert('AI服务暂时不可用，已使用本地建议。错误：' + error.message);
+    }
+}
+
+    // 初始化计算
+    calculateDuration();
+});
+</script>
+{% endblock %}

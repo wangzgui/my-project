@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}本周安排 - 简版{% endblock %}
+
+{% block main %}
+<div class="container py-4">
+    <h2>📅 本周安排</h2>
+    <a href="/" class="btn btn-outline-secondary mb-3">← 返回今日</a>
+
+    {% for day in week_dates %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>{{ day.weekday }}</strong> - {{ day.date.strftime('%m月%d日') }}
+            {% if day.is_today %}<span class="badge bg-primary">今天</span>{% endif %}
+        </div>
+
+        <div class="card-body">
+            {% set day_events = events_by_day.get(day.date_str, []) %}
+            {% if day_events %}
+                {% for event in day_events %}
+                <div class="border-start ps-3 mb-2">
+                    <strong>
+                        {% if event.type == 'event' %}📅{% else %}💰{% endif %}
+                        {{ event.title }}
+                    </strong>
+                    <small class="text-muted ms-2">{{ event.event_time[11:16] }}</small>
+                    {% if event.type == 'expense' %}
+                    <span class="badge bg-warning float-end">¥{{ event.amount }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">今天没有安排</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

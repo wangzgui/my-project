@@ -1,0 +1,615 @@
+{% extends "layout.html" %}
+
+{% block title %}我的时间表 - 智能助手{% endblock %}
+
+{% block head %}
+<style>
+/* 大网格样式 */
+.time-grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 15px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 大时间块 - 每个块2-3小时 */
+.time-slot-large {
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    padding: 20px;
+    position: relative;
+    min-height: 180px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.time-slot-large:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* 大时间块标题 */
+.time-slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f1f3f4;
+}
+
+.time-slot-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.time-slot-title .time-icon {
+    font-size: 1.3rem;
+}
+
+.time-slot-hours {
+    color: #666;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+/* 事件容器 - 大块里面的小盒子 */
+.events-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    min-height: 120px;
+}
+
+/* 事件小卡片 */
+.event-mini-card {
+    background: white;
+    border-radius: 8px;
+    padding: 12px 15px;
+    border-left: 4px solid;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.event-mini-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+}
+
+/* 日程卡片 - 绿色系 */
+.event-mini-card.schedule {
+    border-left-color: #4CAF50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.05), rgba(76, 175, 80, 0.02));
+}
+
+.event-mini-card.schedule::before {
+    content: '📅';
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    opacity: 0.3;
+    font-size: 1.5rem;
+}
+
+/* 消费卡片 - 橙色系 */
+.event-mini-card.expense {
+    border-left-color: #FF9800;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.05), rgba(255, 152, 0, 0.02));
+}
+
+.event-mini-card.expense::before {
+    content: '💰';
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    opacity: 0.3;
+    font-size: 1.5rem;
+}
+
+/* 卡片内容 */
+.event-mini-time {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.event-mini-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.event-mini-details {
+    font-size: 0.8rem;
+    color: #777;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.event-mini-amount {
+    background: #FFEBEE;
+    color: #D32F2F;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.event-mini-duration {
+    background: #E3F2FD;
+    color: #1976D2;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* 空状态提示 */
+.empty-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.empty-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+/* 视图切换 */
+.view-toggle {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 25px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.view-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    color: #666;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.view-btn.active {
+    background: white;
+    color: #333;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .time-grid-container {
+        grid-gap: 12px;
+        padding: 15px;
+    }
+
+    .time-slot-large {
+        padding: 15px;
+        min-height: 160px;
+    }
+
+    .events-container {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="container py-4">
+    <!-- 标题 -->
+    <div class="text-center mb-5">
+        <h1 class="mb-3">📅 我的时间表</h1>
+        <p class="text-muted">以清晰的时间块查看您的一天安排</p>
+    </div>
+
+    <!-- 视图切换 -->
+    <div class="view-toggle mb-4">
+        <button class="view-btn active" onclick="switchView('grid')">📅 网格视图</button>
+        <button class="view-btn" onclick="switchView('list')">📋 列表视图</button>
+    </div>
+
+    <!-- 大块网格视图 -->
+    <div id="gridView">
+        <div class="time-grid-container">
+            <!-- 早上 6:00-9:00 -->
+            <div class="time-slot-large" id="morning1">
+                <div class="time-slot-header">
+                    <div class="time-slot-title">
+                        <span class="time-icon">🌅</span>
+                        <span>清晨</span>
+                    </div>
+                    <span class="time-slot-hours">6:00 - 9:00</span>
+                </div>
+                <div class="events-container" id="slot-morning1"></div>
+            </div>
+
+            <!-- 上午 9:00-12:00 -->
+            <div class="time-slot-large" id="morning2">
+                <div class="time-slot-header">
+                    <div class="time-slot-title">
+                        <span class="time-icon">☀️</span>
+                        <span>上午</span>
+                    </div>
+                    <span class="time-slot-hours">9:00 - 12:00</span>
+                </div>
+                <div class="events-container" id="slot-morning2"></div>
+            </div>
+
+            <!-- 中午 12:00-15:00 -->
+            <div class="time-slot-large" id="afternoon1">
+                <div class="time-slot-header">
+                    <div class="time-slot-title">
+                        <span class="time-icon">🍽️</span>
+                        <span>中午</span>
+                    </div>
+                    <span class="time-slot-hours">12:00 - 15:00</span>
+                </div>
+                <div class="events-container" id="slot-afternoon1"></div>
+            </div>
+
+            <!-- 下午 15:00-18:00 -->
+            <div class="time-slot-large" id="afternoon2">
+                <div class="time-slot-header">
+                    <div class="time-slot-title">
+                        <span class="time-icon">🌤️</span>
+                        <span>下午</span>
+                    </div>
+                    <span class="time-slot-hours">15:00 - 18:00</span>
+                </div>
+                <div class="events-container" id="slot-afternoon2"></div>
+            </div>
+
+            <!-- 傍晚 18:00-21:00 -->
+            <div class="time-slot-large" id="evening1">
+                <div class="time-slot-header">
+                    <div class="time-slot-title">
+                        <span class="time-icon">🌆</span>
+                        <span>傍晚</span>
+                    </div>
+                    <span class="time-slot-hours">18:00 - 21:00</span>
+                </div>
+                <div class="events-container" id="slot-evening1"></div>
+            </div>
+
+            <!-- 晚上 21:00-24:00 -->
+            <div class="time-slot-large" id="evening2">
+                <div class="time-slot-header">
+                    <div class="time-slot-title">
+                        <span class="time-icon">🌙</span>
+                        <span>晚上</span>
+                    </div>
+                    <span class="time-slot-hours">21:00 - 24:00</span>
+                </div>
+                <div class="events-container" id="slot-evening2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 列表视图 -->
+    <div id="listView" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">📋 今日所有安排</h5>
+                <div id="eventList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 无事件提示 -->
+    <div id="noEvents" style="display: none;">
+        <div class="text-center py-5">
+            <div style="font-size: 4rem; color: #e0e0e0; margin-bottom: 1rem;">📅</div>
+            <h4 class="text-muted">今天还没有安排</h4>
+            <p class="text-muted mb-4">开始规划你的一天吧！</p>
+            <a href="/add/event" class="btn btn-primary me-2">添加日程</a>
+            <a href="/add/expense" class="btn btn-outline-primary">添加消费</a>
+        </div>
+    </div>
+</div>
+
+<!-- 事件详情弹窗 -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="editEvent()">编辑</button>
+                <button type="button" class="btn btn-outline-danger" onclick="deleteEvent()">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 从Flask获取数据
+if (typeof window.events === 'undefined') {
+    window.events = JSON.parse('{{ events|tojson|safe }}');
+}
+const today = '{{ today_date }}';
+
+// 定义时间区块
+const timeSlots = [
+    { id: 'morning1', name: '清晨', start: 6, end: 9, icon: '🌅' },
+    { id: 'morning2', name: '上午', start: 9, end: 12, icon: '☀️' },
+    { id: 'afternoon1', name: '中午', start: 12, end: 15, icon: '🍽️' },
+    { id: 'afternoon2', name: '下午', start: 15, end: 18, icon: '🌤️' },
+    { id: 'evening1', name: '傍晚', start: 18, end: 21, icon: '🌆' },
+    { id: 'evening2', name: '晚上', start: 21, end: 24, icon: '🌙' }
+];
+
+// 主渲染函数
+function renderGridView() {
+    console.log('开始渲染网格视图，事件数量：', events.length);
+
+    // 清空所有区块
+    timeSlots.forEach(slot => {
+        const container = document.getElementById('slot-' + slot.id);
+        if (container) {
+            container.innerHTML = '';
+        }
+    });
+
+    // 如果没有事件，显示空状态
+    if (!events || events.length === 0) {
+        document.getElementById('gridView').style.display = 'none';
+        document.getElementById('noEvents').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('gridView').style.display = 'block';
+    document.getElementById('noEvents').style.display = 'none';
+
+    // 将事件分配到对应的时间区块
+    events.forEach(event => {
+        if (!event.event_time) return;
+
+        const eventTime = new Date(event.event_time);
+        const eventHour = eventTime.getHours();
+
+        // 找到事件所属的时间区块
+        const slot = timeSlots.find(s => eventHour >= s.start && eventHour < s.end);
+        if (!slot) return;
+
+        const container = document.getElementById('slot-' + slot.id);
+        if (!container) return;
+
+        // 创建事件卡片
+        const eventCard = createEventCard(event, eventTime);
+        container.appendChild(eventCard);
+    });
+
+    // 处理空区块
+    timeSlots.forEach(slot => {
+        const container = document.getElementById('slot-' + slot.id);
+        if (container && container.children.length === 0) {
+            container.innerHTML = `
+                <div class="empty-slot">
+                    <div class="empty-icon">📭</div>
+                    <div>暂无安排</div>
+                </div>
+            `;
+        }
+    });
+}
+
+// 创建事件卡片
+function createEventCard(event, eventTime) {
+    const timeStr = eventTime.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const card = document.createElement('div');
+    card.className = `event-mini-card ${event.type === 'event' ? 'schedule' : 'expense'}`;
+    card.onclick = () => showEventDetails(event);
+
+    let cardContent = `
+        <div class="event-mini-time">${timeStr}</div>
+        <div class="event-mini-title">${event.title}</div>
+        <div class="event-mini-details">
+    `;
+
+    if (event.type === 'event' && event.duration) {
+        const hours = Math.floor(event.duration / 60);
+        const minutes = event.duration % 60;
+        if (hours > 0 || minutes > 0) {
+            cardContent += `<span class="event-mini-duration">${hours}h${minutes}m</span>`;
+        }
+    } else if (event.type === 'expense' && event.amount) {
+        cardContent += `<span class="event-mini-amount">¥${event.amount}</span>`;
+    }
+
+    if (event.category) {
+        cardContent += `<span style="color:#666; font-size:0.8rem">${event.category}</span>`;
+    }
+
+    cardContent += `</div>`;
+    card.innerHTML = cardContent;
+
+    return card;
+}
+
+// 显示列表视图
+function renderListView() {
+    const listContainer = document.getElementById('eventList');
+    if (!events || events.length === 0) {
+        listContainer.innerHTML = '<p class="text-muted text-center py-4">今天还没有安排</p>';
+        return;
+    }
+
+    let listHTML = '<div class="list-group">';
+
+    events.sort((a, b) => new Date(a.event_time) - new Date(b.event_time)).forEach(event => {
+        if (!event.event_time) return;
+
+        const eventTime = new Date(event.event_time);
+        const timeStr = eventTime.toLocaleString('zh-CN', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        listHTML += `
+            <a href="#" class="list-group-item list-group-item-action" onclick="showEventDetails(${JSON.stringify(event)})">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${event.type === 'event' ? '📅' : '💰'} ${event.title}</h6>
+                    <small>${timeStr}</small>
+                </div>
+                <p class="mb-1">
+                    ${event.type === 'event' ?
+                        (event.notes || '') :
+                        `¥${event.amount} | ${event.category}`
+                    }
+                </p>
+            </a>
+        `;
+    });
+
+    listHTML += '</div>';
+    listContainer.innerHTML = listHTML;
+}
+
+// 显示事件详情
+let currentEvent = null;
+
+function showEventDetails(event) {
+    currentEvent = event;
+
+    const eventTime = new Date(event.event_time);
+    const timeStr = eventTime.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        weekday: 'long'
+    });
+
+    document.getElementById('modalTitle').textContent = event.title;
+
+    let modalHTML = `
+        <div class="mb-3">
+            <span class="badge ${event.type === 'event' ? 'bg-success' : 'bg-warning'} me-2">
+                ${event.type === 'event' ? '日程' : '消费'}
+            </span>
+            <span class="text-muted">${timeStr}</span>
+        </div>
+    `;
+
+    if (event.type === 'event') {
+        modalHTML += `
+            <p><strong>📅 类型：</strong>日程安排</p>
+            ${event.end_time ? `<p><strong>⏱️ 结束时间：</strong>${new Date(event.end_time).toLocaleTimeString('zh-CN')}</p>` : ''}
+            ${event.duration ? `<p><strong>⏱️ 持续时间：</strong>${Math.floor(event.duration/60)}小时${event.duration%60}分钟</p>` : ''}
+            ${event.notes ? `<p><strong>📋 备注：</strong>${event.notes}</p>` : ''}
+        `;
+    } else {
+        modalHTML += `
+            <p><strong>💰 类型：</strong>消费记录</p>
+            <p><strong>💵 金额：</strong>¥${event.amount}</p>
+            <p><strong>🏷️ 类别：</strong>${event.category}</p>
+            ${event.notes ? `<p><strong>📋 备注：</strong>${event.notes}</p>` : ''}
+        `;
+    }
+
+    if (event.ai_comment) {
+        modalHTML += `
+            <div class="alert alert-info mt-3">
+                <strong>🤖 AI建议：</strong>${event.ai_comment}
+            </div>
+        `;
+    }
+
+    document.getElementById('modalContent').innerHTML = modalHTML;
+
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+    modal.show();
+}
+
+function editEvent() {
+    if (currentEvent) {
+        window.location.href = `/edit/${currentEvent.id}`;
+    }
+}
+
+function deleteEvent() {
+    if (currentEvent && confirm(`确定要删除"${currentEvent.title}"吗？`)) {
+        window.location.href = `/delete/${currentEvent.id}`;
+    }
+}
+
+// 视图切换
+function switchView(viewType) {
+    const gridBtn = document.querySelector('[onclick="switchView(\'grid\')"]');
+    const listBtn = document.querySelector('[onclick="switchView(\'list\')"]');
+
+    if (viewType === 'grid') {
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+        document.getElementById('gridView').style.display = 'block';
+        document.getElementById('listView').style.display = 'none';
+        renderGridView();
+    } else {
+        gridBtn.classList.remove('active');
+        listBtn.classList.add('active');
+        document.getElementById('gridView').style.display = 'none';
+        document.getElementById('listView').style.display = 'block';
+        renderListView();
+    }
+}
+
+// 页面加载完成
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('页面加载完成，开始渲染');
+    renderGridView();
+
+    // 绑定视图切换按钮
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}
